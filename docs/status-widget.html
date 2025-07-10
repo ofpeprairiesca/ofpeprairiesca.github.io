@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFPE Canadian Prairies Project Status</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: transparent;
+            padding: 16px;
+        }
+
+        .status-widget {
+            background: linear-gradient(135deg, #1e3a8a 0%, #059669 100%);
+            border-radius: 12px;
+            padding: 24px;
+            color: white;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="60" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .widget-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-percentage {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .progress-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 8px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .widget-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        .last-updated {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .view-details {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .view-details:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Status specific colors */
+        .stat-completed { color: #34d399; }
+        .stat-in-progress { color: #60a5fa; }
+        .stat-not-started { color: #d1d5db; }
+        .stat-on-hold { color: #fbbf24; }
+        .stat-blocked { color: #f87171; }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .widget-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+            }
+
+            .progress-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 4px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .widget-footer {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+        }
+
+        /* Animation for numbers */
+        .stat-number {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Pulse animation for active status */
+        .status-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-widget">
+        <div class="widget-header">
+            <div class="widget-title">
+                🌾 OFPE Canadian Prairies Status
+            </div>
+            <div class="status-badge" id="status-badge">Active</div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-header">
+                <div class="progress-label">Overall Progress</div>
+                <div class="progress-percentage" id="progress-percentage">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="stats-grid">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="widget-footer">
+            <div class="last-updated">
+                <span>⏰</span>
+                <span id="last-updated">Updated just now</span>
+            </div>
+            <a href="#" class="view-details" onclick="openFullDashboard()">
+                📊 View Details
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Project data - in production, this would come from your GitHub API
+        let githubConfig = {
+            owner: '',
+            repo: '',
+            token: '',
+            branch: 'main',
+            dataPath: 'data/project-status.json'
+        };
+
+        const projectData = {
+            activities: [
+                { id: 1, status: 'in-progress', title: 'Extension Materials' },
+                { id: 2, status: 'not-started', title: 'Training Partners' },
+                { id: 3, status: 'in-progress', title: 'Data Repository' },
+                { id: 4, status: 'not-started', title: 'Field Trials' },
+                { id: 5, status: 'completed', title: 'Conference Presentations' },
+                { id: 6, status: 'not-started', title: 'Trial Reports' },
+                { id: 7, status: 'not-started', title: 'Board Meetings' },
+                { id: 8, status: 'not-started', title: 'Mid-Term Report' },
+                { id: 9, status: 'not-started', title: 'DIFM Evaluation' },
+                { id: 10, status: 'not-started', title: 'Regional Recommendations' },
+                { id: 11, status: 'not-started', title: 'Impact Assessment' },
+                { id: 12, status: 'not-started', title: 'Final Insights' },
+                { id: 13, status: 'not-started', title: 'Final Report' }
+            ],
+            lastUpdated: new Date()
+        };
+
+        // Load GitHub configuration
+        function loadGitHubConfig() {
+            try {
+                const saved = localStorage.getItem('ofpe-github-config');
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    githubConfig = { ...githubConfig, ...config };
+                    return true;
+                }
+            } catch (e) {
+                console.log('Could not load GitHub configuration');
+            }
+            return false;
+        }
+
+        // Fetch project status from GitHub
+        async function fetchProjectStatus() {
+            if (!githubConfig.owner || !githubConfig.repo) {
+                return null;
+            }
+
+            try {
+                const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.dataPath}`;
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'OFPE-Project-Tracker'
+                };
+
+                if (githubConfig.token) {
+                    headers['Authorization'] = `token ${githubConfig.token}`;
+                }
+
+                const response = await fetch(url, { headers });
+                
+                if (response.status === 404) {
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const content = atob(data.content);
+                const statusData = JSON.parse(content);
+                
+                // Update project data with GitHub status
+                if (statusData.activities) {
+                    statusData.activities.forEach(activity => {
+                        const existing = projectData.activities.find(a => a.id === activity.id);
+                        if (existing) {
+                            existing.status = activity.status;
+                        }
+                    });
+                    
+                    // Update last updated time
+                    if (statusData.lastUpdated) {
+                        projectData.lastUpdated = new Date(statusData.lastUpdated);
+                    }
+                }
+                
+                return statusData;
+            } catch (error) {
+                console.error('Error fetching from GitHub:', error);
+                return null;
+            }
+        }
+
+        async function updateStatusWidget() {
+            // Try to load from GitHub first
+            if (loadGitHubConfig()) {
+                const githubData = await fetchProjectStatus();
+                if (githubData) {
+                    console.log('Loaded status from GitHub');
+                }
+            }
+
+            const statusCounts = {
+                'completed': 0,
+                'in-progress': 0,
+                'not-started': 0,
+                'on-hold': 0,
+                'blocked': 0
+            };
+
+            // Count statuses
+            projectData.activities.forEach(activity => {
+                statusCounts[activity.status]++;
+            });
+
+            const total = projectData.activities.length;
+            const completedPercentage = Math.round((statusCounts.completed / total) * 100);
+
+            // Update progress
+            const progressElement = document.getElementById('progress-percentage');
+            const progressFill = document.getElementById('progress-fill');
+            
+            // Animate progress
+            setTimeout(() => {
+                progressElement.textContent = `${completedPercentage}%`;
+                progressFill.style.width = `${completedPercentage}%`;
+            }, 300);
+
+            // Update stats grid
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-number stat-completed">${statusCounts.completed}</span>
+                    <span class="stat-label">Done</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number stat-in-progress">${statusCounts['in-progress']}</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number stat-not-started">${statusCounts['not-started']}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number stat-on-hold">${statusCounts['on-hold']}</span>
+                    <span class="stat-label">Hold</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number stat-blocked">${statusCounts.blocked}</span>
+                    <span class="stat-label">Blocked</span>
+                </div>
+            `;
+
+            // Update status badge
+            const statusBadge = document.getElementById('status-badge');
+            const activeCount = statusCounts['in-progress'] + statusCounts['completed'];
+            if (activeCount > 0) {
+                statusBadge.textContent = 'Active';
+                statusBadge.style.background = 'rgba(16, 185, 129, 0.8)';
+            } else {
+                statusBadge.textContent = 'Planning';
+                statusBadge.style.background = 'rgba(251, 191, 36, 0.8)';
+            }
+
+            // Update last updated time
+            const lastUpdatedElement = document.getElementById('last-updated');
+            const timeAgo = getTimeAgo(projectData.lastUpdated);
+            lastUpdatedElement.textContent = `Updated ${timeAgo}`;
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hr ago`;
+            return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        }
+
+        function openFullDashboard() {
+            // This would open your main documentation page
+            window.open('index.html', '_blank');
+        }
+
+        // Initialize widget
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatusWidget();
+        });
+
+        // Auto-update every 5 minutes
+        setInterval(updateStatusWidget, 5 * 60 * 1000);
+
+        // Add click handlers for stat items
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.stat-item')) {
+                const statItem = e.target.closest('.stat-item');
+                statItem.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    statItem.style.transform = 'translateY(-2px)';
+                }, 150);
+            }
+        });
+    </script>
+</body>
+</html>
