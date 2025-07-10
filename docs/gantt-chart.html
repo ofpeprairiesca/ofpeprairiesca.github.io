@@ -351,25 +351,25 @@
 
         <!-- GitHub Setup Info -->
         <div class="github-info">
-            <h4>🔧 Setup Required for Team Collaboration</h4>
-            <p><strong>Repository:</strong> <span id="repo-display">Not configured</span></p>
-            <p><strong>Status:</strong> <span id="connection-status">⚠️ Configure GitHub connection below</span></p>
-            <p><a href="#" onclick="toggleAuthSection()">Configure GitHub Integration →</a></p>
+            <h4>📊 Project Status Integration</h4>
+            <p><strong>Repository:</strong> <span id="repo-display">Auto-detecting</span></p>
+            <p><strong>Access:</strong> <span id="connection-status">👀 Read-only - viewing current status</span></p>
+            <p><strong>💡 Note:</strong> Status is visible to everyone. <a href="#" onclick="toggleAuthSection()">Configure GitHub connection</a> only if you need to <strong>update</strong> status.</p>
         </div>
 
         <!-- Authentication Section -->
         <div class="auth-section" id="auth-section">
-            <h4>🔑 GitHub Configuration</h4>
-            <p>To enable team collaboration, provide your GitHub repository details:</p>
+            <h4>🔑 GitHub Configuration (Optional)</h4>
+            <p><strong>Only needed if you want to UPDATE project status.</strong> Current status is always visible to everyone.</p>
             <div class="auth-form">
                 <input type="text" class="auth-input" id="github-owner" placeholder="GitHub Username/Organization">
                 <input type="text" class="auth-input" id="github-repo" placeholder="Repository Name">
-                <input type="password" class="auth-input" id="github-token" placeholder="Personal Access Token (optional)">
-                <button class="btn" onclick="configureGitHub()">Connect</button>
+                <input type="password" class="auth-input" id="github-token" placeholder="Personal Access Token">
+                <button class="btn" onclick="configureGitHub()">Connect for Updates</button>
                 <button class="btn btn-secondary" onclick="toggleAuthSection()">Cancel</button>
             </div>
             <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-                <strong>Note:</strong> Personal Access Token is optional for public repos. 
+                <strong>Personal Access Token required for updates.</strong> 
                 <a href="https://github.com/settings/tokens" target="_blank">Create token here →</a>
             </p>
         </div>
@@ -794,12 +794,22 @@
             const repoDisplay = document.getElementById('repo-display');
             const connectionStatus = document.getElementById('connection-status');
             
+            const detectedOwner = getOwnerFromUrl();
+            const detectedRepo = getRepoFromUrl();
+            
             if (githubConfig.owner && githubConfig.repo) {
                 repoDisplay.textContent = `${githubConfig.owner}/${githubConfig.repo}`;
-                connectionStatus.innerHTML = '✅ Connected to GitHub';
+                if (githubConfig.token) {
+                    connectionStatus.innerHTML = '✅ Connected - Can read and update status';
+                } else {
+                    connectionStatus.innerHTML = '👀 Read-only access - Configure token to update status';
+                }
+            } else if (detectedOwner && detectedRepo) {
+                repoDisplay.textContent = `${detectedOwner}/${detectedRepo} (auto-detected)`;
+                connectionStatus.innerHTML = '👀 Read-only access - Configure for status updates';
             } else {
-                repoDisplay.textContent = 'Not configured';
-                connectionStatus.innerHTML = '⚠️ Configure GitHub connection below';
+                repoDisplay.textContent = 'Not detected - configure manually';
+                connectionStatus.innerHTML = '⚠️ Configure GitHub connection for status access';
             }
         }
 
@@ -900,21 +910,20 @@
 
         async function saveToGitHub() {
             if (!githubConfig.owner || !githubConfig.repo) {
-                throw new Error('GitHub repository not configured');
+                throw new Error('Repository information not configured');
+            }
+
+            if (!githubConfig.token) {
+                throw new Error('Personal Access Token required for updates');
             }
 
             const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.dataPath}`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json',
-                'User-Agent': 'OFPE-Project-Tracker'
+                'User-Agent': 'OFPE-Project-Tracker',
+                'Authorization': `token ${githubConfig.token}`
             };
-
-            if (githubConfig.token) {
-                headers['Authorization'] = `token ${githubConfig.token}`;
-            } else {
-                throw new Error('Personal Access Token required for writing to GitHub');
-            }
 
             // First, try to get the current file to get its SHA
             let sha = null;
@@ -958,7 +967,8 @@
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to save to GitHub: ${response.status} ${response.statusText}`);
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${response.status} - ${errorData.message || response.statusText}`);
             }
 
             return await response.json();
@@ -966,16 +976,10 @@
 
         // Sync with GitHub
         async function syncWithGitHub() {
-            if (!githubConfig.owner || !githubConfig.repo) {
-                alert('Please configure GitHub connection first.');
-                toggleAuthSection();
-                return;
-            }
-
-            updateSyncStatus('syncing', 'Syncing with GitHub...');
+            updateSyncStatus('syncing', 'Loading status...');
 
             try {
-                // Fetch latest data from GitHub
+                // Always try to fetch latest data (public read access)
                 const githubData = await fetchFromGitHub();
                 
                 if (githubData && githubData.activities) {
@@ -987,16 +991,17 @@
                     // Update visual indicators
                     updateAllStatusIndicators();
                     updateProgressSummary();
+                    
+                    updateSyncStatus('success', 'Status loaded from GitHub');
+                } else {
+                    updateSyncStatus('success', 'Using default status');
                 }
-
-                updateSyncStatus('success', 'Synced with GitHub');
             } catch (error) {
                 console.error('Sync error:', error);
-                updateSyncStatus('error', 'Sync failed');
+                updateSyncStatus('error', 'Could not load from GitHub');
                 
-                if (error.message.includes('Personal Access Token required')) {
-                    alert('To save changes to GitHub, you need to provide a Personal Access Token. Click "Configure GitHub Integration" to add one.');
-                }
+                // Don't show alert for read errors, just use defaults
+                console.log('Using default status values');
             }
         }
 
@@ -1157,6 +1162,20 @@
         async function updateActivityStatus(status) {
             if (currentActivityId) {
                 const oldStatus = activityStatuses[currentActivityId];
+                
+                // Check if user can update (needs token and repo info)
+                if (!githubConfig.owner || !githubConfig.repo || !githubConfig.token) {
+                    // Show helpful message about configuration needed
+                    if (!githubConfig.token) {
+                        alert('To update project status, you need to configure GitHub access.\n\n1. Click "Configure GitHub Integration"\n2. Enter repository details\n3. Add your Personal Access Token\n\nCurrent status is read-only.');
+                    } else {
+                        alert('Repository information missing. Please configure GitHub integration to update status.');
+                    }
+                    toggleAuthSection();
+                    hideStatusDropdown();
+                    return;
+                }
+                
                 activityStatuses[currentActivityId] = status;
                 
                 // Update visual indicator immediately
@@ -1167,26 +1186,22 @@
                 updateProgressSummary();
                 hideStatusDropdown();
 
-                // Save to GitHub if configured
-                if (githubConfig.owner && githubConfig.repo && githubConfig.token) {
-                    updateSyncStatus('syncing', 'Saving to GitHub...');
+                // Save to GitHub
+                updateSyncStatus('syncing', 'Saving to GitHub...');
+                
+                try {
+                    await saveToGitHub();
+                    updateSyncStatus('success', 'Saved to GitHub');
+                } catch (error) {
+                    console.error('Save error:', error);
+                    updateSyncStatus('error', 'Save failed');
                     
-                    try {
-                        await saveToGitHub();
-                        updateSyncStatus('success', 'Saved to GitHub');
-                    } catch (error) {
-                        console.error('Save error:', error);
-                        updateSyncStatus('error', 'Save failed');
-                        
-                        // Revert the change if save failed
-                        activityStatuses[currentActivityId] = oldStatus;
-                        indicator.setAttribute('fill', statusColors[oldStatus]);
-                        updateProgressSummary();
-                        
-                        alert('Failed to save to GitHub: ' + error.message);
-                    }
-                } else {
-                    updateSyncStatus('error', 'Not connected to GitHub');
+                    // Revert the change if save failed
+                    activityStatuses[currentActivityId] = oldStatus;
+                    indicator.setAttribute('fill', statusColors[oldStatus]);
+                    updateProgressSummary();
+                    
+                    alert('Failed to save to GitHub: ' + error.message);
                 }
             }
         }
@@ -1295,12 +1310,10 @@
                 }
             });
 
-            // Auto-sync on page load if configured
-            if (githubConfig.owner && githubConfig.repo) {
-                setTimeout(() => {
-                    syncWithGitHub();
-                }, 1000);
-            }
+            // Auto-load status on page load (always try to read)
+            setTimeout(() => {
+                syncWithGitHub();
+            }, 1000);
         });
     </script>
 </body>
