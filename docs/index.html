@@ -789,12 +789,16 @@
 
         // Fetch project status from GitHub
         async function fetchProjectStatus() {
-            if (!githubConfig.owner || !githubConfig.repo) {
+            // Try to auto-detect repository from URL
+            const repoOwner = githubConfig.owner || getOwnerFromUrl();
+            const repoName = githubConfig.repo || getRepoFromUrl();
+
+            if (!repoOwner || !repoName) {
                 return null;
             }
 
             try {
-                const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.dataPath}`;
+                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubConfig.dataPath}`;
                 const headers = {
                     'Accept': 'application/vnd.github.v3+json',
                     'User-Agent': 'OFPE-Project-Tracker'
@@ -835,13 +839,54 @@
             }
         }
 
+        // Enhanced auto-detection with better fallbacks
+        function getRepoInfoFromUrl() {
+            const hostname = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            let owner = null;
+            let repo = null;
+            
+            // GitHub Pages detection: username.github.io/repo-name
+            if (hostname.includes('github.io')) {
+                const hostParts = hostname.split('.');
+                if (hostParts.length >= 3) {
+                    owner = hostParts[0];
+                    
+                    // Get repo from path: /repo-name/docs/index.html
+                    const pathParts = pathname.split('/').filter(p => p);
+                    if (pathParts.length >= 1) {
+                        repo = pathParts[0];
+                    }
+                }
+            }
+            
+            return { owner, repo };
+        }
+
+        // Try to detect owner from current URL
+        function getOwnerFromUrl() {
+            const { owner } = getRepoInfoFromUrl();
+            return owner;
+        }
+
+        // Try to detect repo name from current URL
+        function getRepoFromUrl() {
+            const { repo } = getRepoInfoFromUrl();
+            return repo;
+        }
+
         async function updateProjectStatus() {
-            // Try to load from GitHub first
-            if (loadGitHubConfig()) {
+            // Always try to load from GitHub (public read access) but don't fail if it doesn't work
+            try {
                 const githubData = await fetchProjectStatus();
                 if (githubData) {
-                    console.log('Loaded status from GitHub');
+                    console.log('✅ Loaded status from GitHub');
+                } else {
+                    console.log('ℹ️ No status file found - showing default values');
                 }
+            } catch (error) {
+                console.log('ℹ️ Could not connect to GitHub - showing default values:', error.message);
             }
 
             const statusCounts = {

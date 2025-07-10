@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+<!-- GitHub Setup Info -->
+        <div class="github-info">
+            <h4>📊 Project Status Integration</h4>
+            <p><strong>Repository:</strong> <span id="repo-display">Detecting...</span></p>
+            <p><strong>Access:</strong> <span id="connection-status">Checking access...</span></p>
+            <div id="debug-info" style="font-size: 12px; color: #6b7280; margin-top: 8px;"></div>
+            <p><strong>💡 Note:</strong> <a href<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -352,26 +358,38 @@
         <!-- GitHub Setup Info -->
         <div class="github-info">
             <h4>📊 Project Status Integration</h4>
-            <p><strong>Repository:</strong> <span id="repo-display">Auto-detecting</span></p>
-            <p><strong>Access:</strong> <span id="connection-status">👀 Read-only - viewing current status</span></p>
-            <p><strong>💡 Note:</strong> Status is visible to everyone. <a href="#" onclick="toggleAuthSection()">Configure GitHub connection</a> only if you need to <strong>update</strong> status.</p>
+            <p><strong>Repository:</strong> <span id="repo-display">Detecting...</span></p>
+            <p><strong>Access:</strong> <span id="connection-status">Checking access...</span></p>
+            <div id="debug-info" style="font-size: 12px; color: #6b7280; margin-top: 8px; padding: 8px; background: #f9fafb; border-radius: 4px;"></div>
+            <div id="external-viewer-help" style="display: none; margin-top: 10px; padding: 10px; background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px; font-size: 13px;">
+                <p><strong>👋 External Viewer?</strong> If you're viewing this project as a stakeholder or partner:</p>
+                <p>• Ask the project team for the correct repository link</p>
+                <p>• Or ask them to share the project status dashboard link</p>
+                <p>• Current display shows default values until connected to live data</p>
+            </div>
+            <p><strong>💡 Note:</strong> 
+                Status loads automatically from GitHub. 
+                <a href="#" onclick="toggleAuthSection()">Configure connection</a> to update status or specify a different repository.
+            </p>
         </div>
 
         <!-- Authentication Section -->
         <div class="auth-section" id="auth-section">
-            <h4>🔑 GitHub Configuration (Optional)</h4>
-            <p><strong>Only needed if you want to UPDATE project status.</strong> Current status is always visible to everyone.</p>
+            <h4>🔑 GitHub Repository Configuration</h4>
+            <p><strong>Configure repository to view current status or enable status updates.</strong></p>
             <div class="auth-form">
-                <input type="text" class="auth-input" id="github-owner" placeholder="GitHub Username/Organization">
-                <input type="text" class="auth-input" id="github-repo" placeholder="Repository Name">
-                <input type="password" class="auth-input" id="github-token" placeholder="Personal Access Token">
-                <button class="btn" onclick="configureGitHub()">Connect for Updates</button>
+                <input type="text" class="auth-input" id="github-owner" placeholder="GitHub Username/Organization (e.g., yourname)">
+                <input type="text" class="auth-input" id="github-repo" placeholder="Repository Name (e.g., ofpe-project)">
+                <input type="password" class="auth-input" id="github-token" placeholder="Personal Access Token (optional for viewing)">
+                <button class="btn" onclick="configureGitHub()">Connect Repository</button>
                 <button class="btn btn-secondary" onclick="toggleAuthSection()">Cancel</button>
             </div>
-            <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-                <strong>Personal Access Token required for updates.</strong> 
-                <a href="https://github.com/settings/tokens" target="_blank">Create token here →</a>
-            </p>
+            <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 13px;">
+                <p><strong>🔍 For viewing status:</strong> Just enter username and repository name</p>
+                <p><strong>✏️ For updating status:</strong> Also add your Personal Access Token 
+                   <a href="https://github.com/settings/tokens" target="_blank">→ Create token</a></p>
+                <p><strong>📋 Example:</strong> Username: <code>john-doe</code>, Repository: <code>ofpe-canadian-prairies</code></p>
+            </div>
         </div>
         
         <div class="controls">
@@ -740,6 +758,13 @@
             dataPath: 'data/project-status.json'
         };
 
+        // Fallback repository info for public viewing
+        // This should be set to your actual repository information
+        const DEFAULT_REPO = {
+            owner: '',  // Will be auto-detected from URL or set manually
+            repo: ''    // Will be auto-detected from URL or set manually
+        };
+
         // Activity statuses
         let activityStatuses = {};
 
@@ -845,7 +870,7 @@
             updateConnectionStatus();
             toggleAuthSection();
 
-            // Try to sync data
+            // Try to load status immediately with new configuration
             syncWithGitHub();
         }
 
