@@ -8,7 +8,7 @@ To empower Canadian prairie farmers and agronomists with data-driven insights fr
 ## 📊 Live Project Status
 
 <div align="center">
-  <iframe src="https://ofpeprairiesca.github.io/ofpeprairiesca.github.io/docs/status-widget.html" 
+  <iframe src="https://ofpeprairiesca/ofpeprairiesca.github.io/docs/status-widget.html" 
           width="600" 
           height="300" 
           frameborder="0">
@@ -18,4 +18,4 @@ To empower Canadian prairie farmers and agronomists with data-driven insights fr
 ## 🎯 Quick Links
 
 - **[Project Documentation](https://ofpeprairiesca.github.io)** - Complete project overview
-- **[Interactive Gantt Chart](https://yourusername.github.io/ofpe-canadian-prairies/gantt-chart.html)** - Update project status  
+- **[Interactive Gantt Chart](https://ofpeprairiesca.github.io/ofpeprairiesca.github.io/gantt-chart.html)** - Update project status  
