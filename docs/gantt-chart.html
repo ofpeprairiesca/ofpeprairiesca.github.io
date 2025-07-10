@@ -903,11 +903,11 @@
 
         // GitHub API functions
         async function fetchFromGitHub() {
-            if (!githubConfig.owner || !githubConfig.repo) {
-                throw new Error('GitHub repository not configured');
-            }
+            //if (!githubConfig.owner || !githubConfig.repo) {
+            //    throw new Error('GitHub repository not configured');
+            //}
 
-            const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${githubConfig.dataPath}`;
+            const url = `https://api.github.com/repos/ofpeprairiesca/ofpeprairiesca.github.io/contents/${githubConfig.dataPath}`;
             const headers = {
                 'Accept': 'application/vnd.github.v3+json',
                 'User-Agent': 'OFPE-Project-Tracker'

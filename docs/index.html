@@ -793,12 +793,12 @@
             const repoOwner = githubConfig.owner || getOwnerFromUrl();
             const repoName = githubConfig.repo || getRepoFromUrl();
 
-            if (!repoOwner || !repoName) {
-                return null;
-            }
+            //if (!repoOwner || !repoName) {
+            //    return null;
+            //}
 
             try {
-                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${githubConfig.dataPath}`;
+                const url = `https://api.github.com/repos/ofpeprairiesca/ofpeprairiesca.github.io/contents/${githubConfig.dataPath}`;
                 const headers = {
                     'Accept': 'application/vnd.github.v3+json',
                     'User-Agent': 'OFPE-Project-Tracker'
