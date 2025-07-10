@@ -1,0 +1,71 @@
+{
+  "lastUpdated": "2026-01-15T00:00:00.000Z",
+  "project": "OFPE Canadian Prairies Project",
+  "activities": [
+    {
+      "id": 1,
+      "title": "Develop & Disseminate Extension Materials",
+      "status": "not-started"
+    },
+    {
+      "id": 2,
+      "title": "Conduct Training for Partners",
+      "status": "not-started"
+    },
+    {
+      "id": 3,
+      "title": "Establish Foundational Field Data Repository",
+      "status": "not-started"
+    },
+    {
+      "id": 4,
+      "title": "Conduct Field Trials",
+      "status": "not-started"
+    },
+    {
+      "id": 5,
+      "title": "Present in Scientific and Industry Conferences",
+      "status": "not-started"
+    },
+    {
+      "id": 6,
+      "title": "Generate Individualized Trial Reports",
+      "status": "not-started"
+    },
+    {
+      "id": 7,
+      "title": "Present at Canadian Commodity Board Meetings",
+      "status": "not-started"
+    },
+    {
+      "id": 8,
+      "title": "Mid-Term Project Report Submission",
+      "status": "not-started"
+    },
+    {
+      "id": 9,
+      "title": "Develop Comprehensive DIFM Evaluation Reports",
+      "status": "not-started"
+    },
+    {
+      "id": 10,
+      "title": "Develop Preliminary Regional Recommendations",
+      "status": "not-started"
+    },
+    {
+      "id": 11,
+      "title": "Assess Observed Impacts of OFPE on Farm Practices",
+      "status": "not-started"
+    },
+    {
+      "id": 12,
+      "title": "Finalize All Insights & Recommendations",
+      "status": "not-started"
+    },
+    {
+      "id": 13,
+      "title": "Final Project Report Submission",
+      "status": "not-started"
+    }
+  ]
+}
